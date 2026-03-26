@@ -1,9 +1,16 @@
 using Api.Middleware;
 using Api.Services;
+using Api.UseCases.Tasks;
+using Api.UseCases.Tasks.Interfaces;
 using Api.UseCases.Users;
 using Api.UseCases.Users.Interfaces;
 using Dal;
+using Dal.Context;
+using Dal.Repositories;
 using Logic;
+using Logic.Tasks.Services;
+using Logic.Tasks.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 namespace Api;
@@ -35,6 +42,14 @@ public sealed class Startup
     /// <param name="services">Коллекция сервисов</param>
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddDbContext<TaskDbContext>(options =>
+            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<ITaskRepository, TaskRepository>();
+        
+        services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
+
+        services.AddScoped<ITaskService, TaskService>();
         services.AddControllers();
         services.AddDal();
         services.AddLogic();
@@ -74,6 +89,14 @@ public sealed class Startup
         // Transient
         services.AddTransient<TransientService1>();
         services.AddTransient<TransientService2>();
+
+        // Регистрация UseCase'ов
+        services.AddScoped<IManageUserUseCase, ManageUserUseCase>();
+        services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
+
+        // Регистрация слоёв
+        services.AddDal();
+        services.AddLogic();
     }
 
     /// <summary>
