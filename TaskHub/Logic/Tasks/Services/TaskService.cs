@@ -5,6 +5,8 @@ using Logic.Tasks.Services.Interfaces;
 
 namespace Logic.Tasks.Services;
 
+/// <summary>Реализация сервиса задач</summary>
+
 /// <inheritdoc />
 public sealed class TaskService : ITaskService
 {
@@ -25,27 +27,23 @@ public sealed class TaskService : ITaskService
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<TaskModel>> GetAllTasksAsync(CancellationToken cancellationToken)
     {
-        var tasks = await _taskRepository.GetAllAsync(cancellationToken);
+        var allTasks = await _taskRepository.GetAllAsync(cancellationToken);
 
-        var result = tasks
-            .Select(x => new TaskModel(x.Id, x.Title ?? string.Empty, x.CreatedByUserId, x.CreatedUtc))
+        var taskModels = allTasks
+            .Select(t => new TaskModel(t.Id, t.Title ?? string.Empty, t.CreatedByUserId, t.CreatedUtc))
             .ToList()
             .AsReadOnly();
 
-        return result;
+        return taskModels;
     }
 
     /// <inheritdoc />
     public async Task<TaskModel?> GetTaskByIdAsync(Guid taskId, CancellationToken cancellationToken)
     {
         var task = await _taskRepository.GetByIdAsync(taskId, cancellationToken);
-
-        if (task == null)
-        {
-            return null;
-        }
-
-        return new TaskModel(task.Id, task.Title ?? string.Empty, task.CreatedByUserId, task.CreatedUtc);
+        return task is null
+            ? null
+            : new TaskModel(task.Id, task.Title ?? string.Empty, task.CreatedByUserId, task.CreatedUtc);
     }
 
     /// <inheritdoc />

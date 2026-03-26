@@ -5,6 +5,7 @@ using Api.UseCases.Tasks.Interfaces;
 using Api.UseCases.Users;
 using Api.UseCases.Users.Interfaces;
 using Dal;
+using Dal.Context;
 using Dal.Repositories;
 using Logic;
 using Logic.Tasks.Services;
@@ -88,13 +89,14 @@ public sealed class Startup
         // Transient
         services.AddTransient<TransientService1>();
         services.AddTransient<TransientService2>();
-        // Регистрация слоёв
-        services.AddDal();
-        services.AddLogic();
 
         // Регистрация UseCase'ов
         services.AddScoped<IManageUserUseCase, ManageUserUseCase>();
         services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
+
+        // Регистрация слоёв
+        services.AddDal();
+        services.AddLogic();
     }
 
     /// <summary>

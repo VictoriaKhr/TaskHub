@@ -20,6 +20,7 @@ public sealed class TasksController : ControllerBase
     /// UseCase управления задачами
     /// </summary>
     private readonly IManageTaskUseCase _taskUseCase;
+    private static readonly Guid DefaultUserId = Guid.Parse("b92220ab-e99b-4df5-a02e-5d123d877994");
 
     public TasksController(IManageTaskUseCase taskUseCase)
     {
@@ -38,7 +39,7 @@ public sealed class TasksController : ControllerBase
         [FromBody] CreateTaskRequest? request,
         CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse("b92220ab-e99b-4df5-a02e-5d123d877994");
+        var userId = DefaultUserId;
 
         var task = await _taskUseCase.CreateTaskAsync(request!.Title ?? string.Empty, userId, cancellationToken);
         return StatusCode(201, task);

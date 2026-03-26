@@ -22,6 +22,9 @@ internal sealed class ManageTaskUseCase : IManageTaskUseCase
     /// <inheritdoc/>
     public async Task<TaskResponse> CreateTaskAsync(string title, Guid userId, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException(nameof(title));
+
         var task = await _taskService.CreateTaskAsync(title, userId, cancellationToken);
         return new TaskResponse(task.Id, task.Title, task.CreatedByUserId, task.CreatedUtc);
     }

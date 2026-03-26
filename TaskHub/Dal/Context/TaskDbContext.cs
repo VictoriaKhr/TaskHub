@@ -1,7 +1,7 @@
 ﻿using Dal.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Dal;
+namespace Dal.Context;
 
 /// <summary>
 /// Контекст базы данных для работы с задачами
@@ -18,8 +18,6 @@ public sealed class TaskDbContext : DbContext
     {
         modelBuilder.Entity<TaskEntity>(entity =>
         {
-            entity.ToTable("tasks");
-
             entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Title).IsRequired();

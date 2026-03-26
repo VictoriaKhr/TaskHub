@@ -2,6 +2,7 @@
 
 namespace Dal.Repositories;
 
+/// <summary>Репозиторий задач</summary>
 public interface ITaskRepository
 {
     Task<TaskEntity> CreateAsync(string title, Guid userId, CancellationToken cancellationToken);

@@ -1,8 +1,10 @@
-﻿using Dal.Entities;
+﻿using Dal.Context;
+using Dal.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dal.Repositories;
 
+/// <summary>Реализация репозитория задач</summary>
 public sealed class TaskRepository : ITaskRepository
 {
     private readonly TaskDbContext _dbContext;
@@ -22,8 +24,8 @@ public sealed class TaskRepository : ITaskRepository
             CreatedUtc = DateTimeOffset.UtcNow
         };
 
-        await _dbContext.Tasks.AddAsync(task, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.Tasks.AddAsync(task, cancellationToken).ConfigureAwait(false);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return task;
     }
@@ -70,6 +72,11 @@ public sealed class TaskRepository : ITaskRepository
 
     public async Task DeleteAllAsync(CancellationToken cancellationToken)
     {
-        await _dbContext.Tasks.ExecuteDeleteAsync(cancellationToken);
+        var allTasks = await _dbContext.Tasks.ToListAsync(cancellationToken);
+        if (allTasks.Any())
+        {
+            _dbContext.Tasks.RemoveRange(allTasks);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

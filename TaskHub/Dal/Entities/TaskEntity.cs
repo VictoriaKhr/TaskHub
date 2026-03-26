@@ -1,5 +1,9 @@
-﻿namespace Dal.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
+namespace Dal.Entities;
+
+/// <summary>Задача пользователя</summary>
+[Table("tasks")]
 public class TaskEntity
 {
     public Guid Id { get; set; }
