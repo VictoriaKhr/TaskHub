@@ -5,12 +5,7 @@ using Api.UseCases.Tasks.Interfaces;
 using Api.UseCases.Users;
 using Api.UseCases.Users.Interfaces;
 using Dal;
-using Dal.Context;
-using Dal.Repositories;
 using Logic;
-using Logic.Tasks.Services;
-using Logic.Tasks.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 namespace Api;
@@ -37,39 +32,36 @@ public sealed class Startup
     }
 
     /// <summary>
-    /// Регистрация сервисов
+    /// Регистрация сервисов в DI контейнере
     /// </summary>
     /// <param name="services">Коллекция сервисов</param>
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddDbContext<TaskDbContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-
-        services.AddScoped<ITaskRepository, TaskRepository>();
-        
-        services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
-
-        services.AddScoped<ITaskService, TaskService>();
+        // Добавляем контроллеры
         services.AddControllers();
+
+        // Регистрация слоёв Dal и Logic
         services.AddDal();
         services.AddLogic();
-        
+
+        // Регистрация UseCase'ов
         services.AddScoped<IManageUserUseCase, ManageUserUseCase>();
-        
+        services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
+
+        // Настройка CORS
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
             {
-                builder
-                    .SetIsOriginAllowed(_ => true)
+                builder.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
             });
         });
 
+        // Добавляем поддержку Swagger
         services.AddEndpointsApiExplorer();
-
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo
@@ -78,29 +70,18 @@ public sealed class Startup
                 Version = "v1"
             });
         });
-        // Singleton
+
+        // Регистрация сервисов для демонстрации жизненных циклов
         services.AddSingleton<SingletonService1>();
         services.AddSingleton<SingletonService2>();
-
-        // Scoped
         services.AddScoped<ScopedService1>();
         services.AddScoped<ScopedService2>();
-
-        // Transient
         services.AddTransient<TransientService1>();
         services.AddTransient<TransientService2>();
-
-        // Регистрация UseCase'ов
-        services.AddScoped<IManageUserUseCase, ManageUserUseCase>();
-        services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
-
-        // Регистрация слоёв
-        services.AddDal();
-        services.AddLogic();
     }
 
     /// <summary>
-    /// Конфигурация middleware пайплайна
+    /// Конфигурация middleware пайплайна обработки запросов
     /// </summary>
     /// <param name="app">Построитель приложения</param>
     public void Configure(IApplicationBuilder app)
@@ -114,10 +95,14 @@ public sealed class Startup
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "TaskHub API v1");
             });
         }
-    app.UseMiddleware<StudentInfo>();
-    app.UseMiddleware<ResponseTime>();
+
+        app.UseMiddleware<StudentInfo>();
+        app.UseMiddleware<ResponseTime>();
+
+        // Маршрутизация
         app.UseRouting();
 
+        // Маппинг контроллеров
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
