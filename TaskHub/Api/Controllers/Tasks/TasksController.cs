@@ -1,6 +1,7 @@
 ﻿using Api.Attributes;
 using Api.Controllers.Tasks.Request;
 using Api.Controllers.Tasks.Response;
+using Api.Filters;
 using Api.UseCases.Tasks.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,8 @@ namespace Api.Controllers.Tasks;
 [Route("tasks")]
 [ResponseTimeHeader]
 [StudentInfoHeaders]
+[ServiceFilter(typeof(StudentInfoHeadersFilter))]
+[ServiceFilter(typeof(RequestLoggingFilter))]
 public sealed class TasksController : ControllerBase
 {
     /// <summary>
@@ -31,6 +34,7 @@ public sealed class TasksController : ControllerBase
     /// </summary>
     [HttpPost]
     [ValidateUserRequest]
+    [ServiceFilter(typeof(ValidateCreateTaskRequestFilter))]
     public async Task<ActionResult<TaskResponse>> CreateTaskAsync(
         [FromBody] CreateTaskRequest? request,
         CancellationToken cancellationToken)
@@ -71,6 +75,7 @@ public sealed class TasksController : ControllerBase
     /// </summary>
     [HttpPut("{id}/title")]
     [ValidateUserRequest]
+    [ServiceFilter(typeof(ValidateSetTaskTitleRequestFilter))]
     public async Task<IActionResult> SetTaskTitleAsync(
         [ModelBinder(typeof(FromRouteTaskIdAttribute))] Guid id,
         [FromBody] SetTaskTitleRequest? request,

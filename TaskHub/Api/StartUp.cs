@@ -1,3 +1,4 @@
+using Api.Filters;
 using Api.Middleware;
 using Api.Services;
 using Api.UseCases.Tasks;
@@ -34,7 +35,6 @@ public sealed class Startup
     /// <summary>
     /// Регистрация сервисов в DI контейнере
     /// </summary>
-    /// <param name="services">Коллекция сервисов</param>
     public void ConfigureServices(IServiceCollection services)
     {
         // Добавляем контроллеры
@@ -47,6 +47,12 @@ public sealed class Startup
         // Регистрация UseCase'ов
         services.AddScoped<IManageUserUseCase, ManageUserUseCase>();
         services.AddScoped<IManageTaskUseCase, ManageTaskUseCase>();
+
+        // Регистрация фильтров
+        services.AddScoped<StudentInfoHeadersFilter>();
+        services.AddScoped<RequestLoggingFilter>();
+        services.AddScoped<ValidateCreateTaskRequestFilter>();
+        services.AddScoped<ValidateSetTaskTitleRequestFilter>();
 
         // Настройка CORS
         services.AddCors(options =>
@@ -83,7 +89,6 @@ public sealed class Startup
     /// <summary>
     /// Конфигурация middleware пайплайна обработки запросов
     /// </summary>
-    /// <param name="app">Построитель приложения</param>
     public void Configure(IApplicationBuilder app)
     {
         if (Environment.IsDevelopment())
