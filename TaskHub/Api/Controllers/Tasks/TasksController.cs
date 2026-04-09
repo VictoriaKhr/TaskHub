@@ -1,11 +1,11 @@
-﻿using Api.Controllers.Tasks.Request;
+﻿using Api.Attributes;
+using Api.Controllers.Tasks.Request;
 using Api.Controllers.Tasks.Response;
+using Api.Filters;
 using Api.UseCases.Tasks.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Tasks;
-
-using Api.Attributes;
 
 /// <summary>
 /// Контроллер работы с задачами
@@ -14,6 +14,8 @@ using Api.Attributes;
 [Route("tasks")]
 [ResponseTimeHeader]
 [StudentInfoHeaders]
+[ServiceFilter(typeof(StudentInfoHeadersFilter))]
+[ServiceFilter(typeof(RequestLoggingFilter))]
 public sealed class TasksController : ControllerBase
 {
     /// <summary>
@@ -30,17 +32,14 @@ public sealed class TasksController : ControllerBase
     /// <summary>
     /// Создать задачу
     /// </summary>
-    /// <param name="request">Данные для создания задачи</param>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>Созданная задача</returns>
     [HttpPost]
     [ValidateUserRequest]
+    [ServiceFilter(typeof(ValidateCreateTaskRequestFilter))]
     public async Task<ActionResult<TaskResponse>> CreateTaskAsync(
         [FromBody] CreateTaskRequest? request,
         CancellationToken cancellationToken)
     {
         var userId = DefaultUserId;
-
         var task = await _taskUseCase.CreateTaskAsync(request!.Title ?? string.Empty, userId, cancellationToken);
         return StatusCode(201, task);
     }
@@ -48,8 +47,6 @@ public sealed class TasksController : ControllerBase
     /// <summary>
     /// Получить все задачи
     /// </summary>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>Список задач</returns>
     [HttpGet]
     public async Task<ActionResult<List<TaskResponse>>> GetAllTasksAsync(CancellationToken cancellationToken)
     {
@@ -60,33 +57,27 @@ public sealed class TasksController : ControllerBase
     /// <summary>
     /// Получить задачу по идентификатору
     /// </summary>
-    /// <param name="id">Идентификатор задачи</param>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>Задача или 404, если задача не найдена</returns>
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<TaskResponse>> GetTaskByIdAsync([FromRoute] Guid id, CancellationToken cancellationToken)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TaskResponse>> GetTaskByIdAsync(
+        [ModelBinder(typeof(FromRouteTaskIdAttribute))] Guid id,
+        CancellationToken cancellationToken)
     {
         var taskResponse = await _taskUseCase.GetTaskByIdAsync(id, cancellationToken);
-
         if (taskResponse is null)
         {
             return NotFound();
         }
-
         return Ok(taskResponse);
     }
 
     /// <summary>
     /// Изменить название задачи
     /// </summary>
-    /// <param name="id">Идентификатор задачи</param>
-    /// <param name="request">Данные для изменения названия</param>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>204 при успехе или 400 при неверном запросе</returns>
-    [HttpPut("{id:guid}/title")]
+    [HttpPut("{id}/title")]
     [ValidateUserRequest]
+    [ServiceFilter(typeof(ValidateSetTaskTitleRequestFilter))]
     public async Task<IActionResult> SetTaskTitleAsync(
-        [FromRoute] Guid id,
+        [ModelBinder(typeof(FromRouteTaskIdAttribute))] Guid id,
         [FromBody] SetTaskTitleRequest? request,
         CancellationToken cancellationToken)
     {
@@ -97,34 +88,26 @@ public sealed class TasksController : ControllerBase
     /// <summary>
     /// Удалить задачу по идентификатору
     /// </summary>
-    /// <param name="id">Идентификатор задачи</param>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>204 при успехе или 404, если задача не найдена</returns>
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteTaskByIdAsync([FromRoute] Guid id, CancellationToken cancellationToken)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTaskByIdAsync(
+        [ModelBinder(typeof(FromRouteTaskIdAttribute))] Guid id,
+        CancellationToken cancellationToken)
     {
         var deleted = await _taskUseCase.DeleteTaskByIdAsync(id, cancellationToken);
         if (deleted == false)
         {
             return NotFound();
         }
-
         return NoContent();
     }
 
     /// <summary>
     /// Удалить все задачи
     /// </summary>
-    /// <param name="cancellationToken">Токен отмены</param>
-    /// <returns>204 при успехе</returns>
     [HttpDelete]
     public async Task<IActionResult> DeleteAllTasksAsync(CancellationToken cancellationToken)
     {
-
-
-        await
-
-        _taskUseCase.DeleteAllTasksAsync(cancellationToken);
+        await _taskUseCase.DeleteAllTasksAsync(cancellationToken);
         return NoContent();
     }
 }
